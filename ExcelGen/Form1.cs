@@ -76,8 +76,6 @@ namespace ExcelGen
                 "Négyzetméter ár (Ft/m2)"
             };
 
-            FormatTable(headers);
-
             for (int i = 0; i < headers.Length; i++)
             {
                 xlSheet.Cells[1, i + 1] = headers[i];
@@ -101,17 +99,19 @@ namespace ExcelGen
                 counter++;
             }
 
+            FormatTable(headers, values);
+
             xlSheet.get_Range(
                         GetCell(2, 1),
                         GetCell(1 + values.GetLength(0), values.GetLength(1))).Value2 = values;
 
             for (int i = 0; i < values.GetLength(0); i++)
             {
-                xlSheet.Cells[i, 9] = "=" + GetCell(i + 1, 8) + "/" + GetCell(i + 1, 7);
+                xlSheet.Cells[i + 2, 9] = "=" + GetCell(i + 2, 8) + "/" + GetCell(i + 2, 7);
             }
         }
 
-        void FormatTable(string[] headers)
+        void FormatTable(string[] headers, object[,] values)
         {
             Excel.Range headerRange = xlSheet.get_Range(GetCell(1, 1), GetCell(1, headers.Length));
             headerRange.Font.Bold = true;
@@ -122,7 +122,8 @@ namespace ExcelGen
             headerRange.Interior.Color = Color.LightBlue;
             headerRange.BorderAround2(Excel.XlLineStyle.xlContinuous, Excel.XlBorderWeight.xlThick);
 
-            int lastRowID = xlSheet.UsedRange.Rows.Count;
+            //int lastRowID = xlSheet.UsedRange.Rows.Count; // rossz értéket ad vissza (2)
+            int lastRowID = values.GetLength(0) + 1; // +1, mert a fejlécet is bele kell számolni
 
             Excel.Range tableRange = xlSheet.get_Range(GetCell(2, 1), GetCell(lastRowID, headers.Length));
             Excel.Range firstColumn = xlSheet.get_Range(GetCell(2, 1), GetCell(lastRowID, 1));
