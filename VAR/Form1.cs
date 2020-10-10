@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,6 +18,7 @@ namespace VAR
         List<Tick> ticks;
         PortfolioEntities context = new PortfolioEntities();
         List<PortfolioItem> Portfolio = new List<PortfolioItem>();
+        List<decimal> Nyereségek = new List<decimal>();
 
         public Form1()
         {
@@ -25,7 +27,6 @@ namespace VAR
             dataGridView1.DataSource = ticks;
             CreatePortfolio();
 
-            List<decimal> Nyereségek = new List<decimal>();
             int intervalum = 30;
             DateTime kezdőDátum = (from x in ticks select x.TradingDay).Min();
             DateTime záróDátum = new DateTime(2016, 12, 30);
@@ -67,6 +68,30 @@ namespace VAR
                 value += (decimal)last.Price * item.Volume;
             }
             return value;
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            SaveFileDialog sfd = new SaveFileDialog();
+
+            if(sfd.ShowDialog() == DialogResult.OK)
+            {
+                StreamWriter sw = new StreamWriter(sfd.FileName);
+
+                sw.WriteLine("Időszak;Nyereség");
+                var nyereségekRendezve = (from x in Nyereségek
+                                          orderby x
+                                          select x)
+                                            .ToList();
+                var count = 0;
+                foreach(var item in nyereségekRendezve)
+                {
+                    count++;
+                    sw.WriteLine(count + ";" + item);
+                }
+
+                sw.Close();
+            }
         }
     }
 }
