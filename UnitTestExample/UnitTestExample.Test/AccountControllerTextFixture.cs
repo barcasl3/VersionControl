@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 using NUnit.Framework;
 using UnitTestExample.Controllers;
 using System.Activities;
+using Moq;
+using UnitTestExample.Abstractions;
+using UnitTestExample.Entities;
 
 namespace UnitTestExample.Test
 {
@@ -52,12 +55,17 @@ namespace UnitTestExample.Test
         public void TestRegisterHappyPath(string email, string password)
         {
             var accountController = new AccountController();
+            var accountServiceMock = new Mock<IAccountManager>(MockBehavior.Strict);
+            accountServiceMock.Setup(m => m.CreateAccount(It.IsAny<Account>())).Returns<Account>(a => a);
+            accountController.AccountManager = accountServiceMock.Object;
+
 
             var result = accountController.Register(email, password);
 
             Assert.AreEqual(email, result.Email);
             Assert.AreEqual(password, result.Password);
             Assert.AreNotEqual(Guid.Empty, result.ID);
+            accountServiceMock.Verify(m => m.CreateAccount(result), Times.Once);
         }
 
         [
@@ -81,6 +89,29 @@ namespace UnitTestExample.Test
             catch(Exception ex)
             {
                 Assert.IsInstanceOf<ValidationException>(ex);
+            }
+        }
+
+        [
+            Test,
+            TestCase("irf@uni-corvinus.hu", "Abcd1234")
+        ]
+        public void TestRegisterApplicationException(string email, string password)
+        {
+            var accountServiceMock = new Mock<IAccountManager>(MockBehavior.Strict);
+            accountServiceMock.Setup(m => m.CreateAccount(It.IsAny<Account>())).Throws<ApplicationException>();
+
+            var accountController = new AccountController();
+            accountController.AccountManager = accountServiceMock.Object;
+
+            try
+            {
+                var result = accountController.Register(email, password);
+                Assert.Fail();
+            }
+            catch(Exception ex)
+            {
+                Assert.IsInstanceOf<ApplicationException>(ex);
             }
         }
     }
